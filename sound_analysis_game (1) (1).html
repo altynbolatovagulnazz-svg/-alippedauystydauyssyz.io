@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Дауысты және дауыссыз дыбыстар - 1 Сынып Әліппе</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        * {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 900;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+
+        body {
+            background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 3D Glassmorphism Box */
+        .card-3d {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15),
+                        0 10px 0px #4ade80,
+                        inset 0 2px 4px rgba(255, 255, 255, 0.9);
+            border: 4px solid #ffffff;
+        }
+
+        /* 3D Buttons */
+        .btn-3d {
+            transition: all 0.1s ease;
+            position: relative;
+            touch-action: auto;
+            cursor: pointer;
+        }
+
+        .btn-3d:active {
+            transform: translateY(4px) !important;
+            box-shadow: 0 2px 0px currentColor !important;
+        }
+
+        .btn-green {
+            background-color: #22c55e;
+            color: white;
+            box-shadow: 0 8px 0px #15803d, 0 12px 18px rgba(0,0,0,0.15);
+        }
+
+        .btn-red {
+            background-color: #ef4444;
+            color: white;
+            box-shadow: 0 8px 0px #b91c1c, 0 12px 18px rgba(0,0,0,0.15);
+        }
+
+        .btn-yellow {
+            background-color: #eab308;
+            color: white;
+            box-shadow: 0 8px 0px #a16207, 0 12px 18px rgba(0,0,0,0.15);
+        }
+
+        /* 3D Draggable Balls */
+        .ball-3d {
+            width: 82px;
+            height: 82px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            position: relative;
+            z-index: 10;
+            transition: transform 0.1s ease;
+        }
+
+        .ball-3d:active {
+            cursor: grabbing;
+        }
+
+        .ball-red {
+            background: radial-gradient(circle at 30% 30%, #ff7676, #dc2626);
+            box-shadow: 0 10px 20px rgba(220, 38, 38, 0.4), inset -4px -4px 8px rgba(0,0,0,0.3);
+            border: 4px solid #fca5a5;
+        }
+
+        .ball-blue {
+            background: radial-gradient(circle at 30% 30%, #60a5fa, #2563eb);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.4), inset -4px -4px 8px rgba(0,0,0,0.3);
+            border: 4px solid #93c5fd;
+        }
+
+        /* Target Slots */
+        .drop-slot {
+            width: 82px;
+            height: 82px;
+            border-radius: 50%;
+            border: 4px dashed #94a3b8;
+            background: rgba(241, 245, 249, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .drop-slot.drag-over {
+            background: #e2e8f0;
+            border-color: #3b82f6;
+            transform: scale(1.08);
+        }
+
+        .letter-box {
+            font-size: 3rem;
+            font-weight: 900;
+            color: #0f172a;
+            text-shadow: 2px 2px 0px #cbd5e1;
+        }
+
+        /* Ghost Clone for Dragging on Mobile & Desktop */
+        .drag-ghost {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%) scale(1.1);
+            opacity: 0.9;
+        }
+
+        /* Shake animation for incorrect answer */
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0px); }
+        }
+    </style>
+</head>
+<body class="p-4">
+
+    <div id="app" class="w-full max-w-3xl h-[680px] flex flex-col justify-between relative">
+
+        <!-- 1. START SCREEN -->
+        <div id="start-screen" class="card-3d p-8 text-center my-auto flex flex-col items-center justify-center space-y-6 floating">
+            <div class="space-y-3">
+                <span class="bg-yellow-400 text-yellow-950 text-base font-black px-5 py-2 rounded-full uppercase tracking-wider">1 Сынып • Әліппе</span>
+                <h1 class="text-4xl md:text-5xl font-black text-emerald-800 drop-shadow-md">
+                    Дауысты және дауыссыз дыбыстар
+                </h1>
+                <p class="text-gray-600 text-xl font-bold">Сөздерге дыбыстық талдау жасап үйренейік!</p>
+            </div>
+
+            <div class="flex justify-center space-x-10 my-4">
+                <div class="flex flex-col items-center space-y-2">
+                    <div class="ball-3d ball-red text-white text-3xl font-black">🔴</div>
+                    <span class="text-red-600 font-black text-2xl">дауысты</span>
+                </div>
+                <div class="flex flex-col items-center space-y-2">
+                    <div class="ball-3d ball-blue text-white text-3xl font-black">🔵</div>
+                    <span class="text-blue-600 font-black text-2xl">дауыссыз</span>
+                </div>
+            </div>
+
+            <button onclick="startGame()" class="btn-3d btn-green text-2xl md:text-3xl font-black px-12 py-5 rounded-3xl w-full max-w-xs">
+                БАСТАУ 🚀
+            </button>
+        </div>
+
+        <!-- 2. MAIN GAME SCREEN -->
+        <div id="game-screen" class="hidden flex-col justify-between h-full space-y-4">
+            
+            <!-- Header bar -->
+            <div class="card-3d px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="text-3xl">⭐</span>
+                    <div>
+                        <div class="text-xs text-gray-500 uppercase tracking-wider font-extrabold">Упай</div>
+                        <div id="score-display" class="text-2xl font-black text-amber-500">0</div>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <h2 class="text-2xl md:text-3xl font-black text-gray-800">Сөзді талдаңыз</h2>
+                </div>
+
+                <!-- Stop Game Button -->
+                <button onclick="endGame()" class="btn-3d btn-red px-5 py-2.5 text-base md:text-lg rounded-2xl font-black">
+                    Тоқтату 🛑
+                </button>
+            </div>
+
+            <!-- Game Board -->
+            <div id="game-card" class="card-3d p-6 md:p-8 text-center flex flex-col items-center justify-between flex-grow relative overflow-hidden">
+                
+                <!-- Instruction Banner -->
+                <div class="bg-blue-50 border-2 border-blue-200 rounded-2xl px-6 py-2.5 shadow-sm">
+                    <p class="text-blue-700 font-black text-lg md:text-xl">
+                        Дөңгелекті бос ұяшыққа сүйреңіз
+                    </p>
+                </div>
+
+                <!-- Letters and Target Drop Slots -->
+                <div id="word-container" class="flex flex-col items-center justify-center space-y-4 my-2">
+                    <!-- Injected dynamically via JS -->
+                </div>
+
+                <!-- Feedback Message Display (Дұрыс / Қате) -->
+                <div id="feedback-message" class="h-10 flex items-center justify-center font-black text-3xl transition-all duration-200">
+                </div>
+
+                <!-- Palette with Draggable Red & Blue Balls -->
+                <div class="w-full border-t-2 border-gray-100 pt-4">
+                    <div class="flex justify-around items-center max-w-md mx-auto">
+                        
+                        <!-- Red Ball Source -->
+                        <div class="flex flex-col items-center space-y-2">
+                            <div id="source-red" class="ball-3d ball-red" data-color="red">
+                                <span class="text-3xl opacity-30">🔴</span>
+                            </div>
+                            <span class="text-red-500 font-black text-2xl tracking-wide">дауысты</span>
+                        </div>
+
+                        <!-- Blue Ball Source -->
+                        <div class="flex flex-col items-center space-y-2">
+                            <div id="source-blue" class="ball-3d ball-blue" data-color="blue">
+                                <span class="text-3xl opacity-30">🔵</span>
+                            </div>
+                            <span class="text-blue-500 font-black text-2xl tracking-wide">дауыссыз</span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Action Controls -->
+                <div class="flex space-x-4 w-full max-w-xs pt-2">
+                    <button onclick="checkAnswer()" class="btn-3d btn-green text-xl font-black py-3 rounded-2xl w-full">
+                        Тексеру 🔍
+                    </button>
+                    <button onclick="resetCurrentWord()" class="btn-3d btn-yellow text-xl font-black px-5 rounded-2xl" title="Қайта тазалау">
+                        🔄
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 3. REWARD / END SCREEN -->
+        <div id="end-screen" class="hidden card-3d p-8 text-center my-auto flex-col items-center justify-center space-y-6">
+            <div class="text-7xl animate-bounce">🏆</div>
+            
+            <div class="space-y-2">
+                <h2 class="text-4xl md:text-5xl font-black text-emerald-600 drop-shadow-sm">Тамаша!</h2>
+                <p class="text-gray-600 font-bold text-xl">Сіз сөздерді дыбыстық талдауды өте жақсы орындадыңыз!</p>
+            </div>
+
+            <div class="bg-amber-50 border-2 border-amber-200 rounded-3xl p-6 w-full max-w-sm space-y-4">
+                <div class="flex justify-between items-center text-xl font-extrabold text-amber-900 border-b border-amber-200 pb-2">
+                    <span>Талданған сөздер:</span>
+                    <span id="final-words-count" class="text-3xl font-black text-amber-600">0</span>
+                </div>
+                <div class="flex justify-between items-center text-xl font-extrabold text-amber-900">
+                    <span>Жалпы ұпай:</span>
+                    <span id="final-score" class="text-3xl font-black text-amber-600">0</span>
+                </div>
+                <div id="star-rating" class="text-4xl pt-2">
+                    ⭐⭐⭐
+                </div>
+            </div>
+
+            <button onclick="restartGame()" class="btn-3d btn-green text-2xl font-black px-12 py-4 rounded-3xl w-full max-w-xs">
+                Қайта ойнау 🔄
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // WORD DATABASE (Exactly 21 words, "ТОРЫ" is removed)
+        const WORD_DATABASE = [
+            { word: "ҚАРА", solution: ["blue", "red", "blue", "red"] },
+            { word: "ҚАЛ", solution: ["blue", "red", "blue"] },
+            { word: "АРҚАР", solution: ["red", "blue", "blue", "red", "blue"] },
+            { word: "ТАҚ", solution: ["blue", "red", "blue"] },
+            { word: "АСЫҚ", solution: ["red", "blue", "red", "blue"] },
+            { word: "ОТАН", solution: ["red", "blue", "red", "blue"] },
+            { word: "ҚАР", solution: ["blue", "red", "blue"] },
+            { word: "САТЫ", solution: ["blue", "red", "blue", "red"] },
+            { word: "АРА", solution: ["red", "blue", "red"] },
+            { word: "АНА", solution: ["red", "blue", "red"] },
+            { word: "АРАЛ", solution: ["red", "blue", "red", "blue"] },
+            { word: "ОТЫН", solution: ["red", "blue", "red", "blue"] },
+            { word: "САН", solution: ["blue", "red", "blue"] },
+            { word: "ТАРА", solution: ["blue", "red", "blue", "red"] },
+            { word: "САРЫ", solution: ["blue", "red", "blue", "red"] },
+            { word: "АЛЫС", solution: ["red", "blue", "red", "blue"] },
+            { word: "ОРТА", solution: ["red", "blue", "blue", "red"] },
+            { word: "ТОҚ", solution: ["blue", "red", "blue"] },
+            { word: "АҚЫН", solution: ["red", "blue", "red", "blue"] },
+            { word: "ТАС", solution: ["blue", "red", "blue"] },
+            { word: "ТАРЫ", solution: ["blue", "red", "blue", "red"] }
+        ];
+
+        // GAME STATE
+        let currentWordIndex = 0;
+        let shuffledWords = [];
+        let userAnswers = [];
+        let score = 0;
+        let completedWordsCount = 0;
+
+        // AUDIO SYNTHESIZER (Web Audio API)
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'drag') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, now);
+                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
+                osc.start(now);
+                osc.stop(now + 0.04);
+            } else if (type === 'drop') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(350, now);
+                osc.frequency.exponentialRampToValueAtTime(700, now + 0.08);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } else if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.setValueAtTime(659.25, now + 0.1);
+                osc.frequency.setValueAtTime(783.99, now + 0.2);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(240, now);
+                osc.frequency.setValueAtTime(160, now + 0.15);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'win') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.setValueAtTime(554.37, now + 0.15);
+                osc.frequency.setValueAtTime(659.25, now + 0.3);
+                osc.frequency.setValueAtTime(880, now + 0.45);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
+                osc.start(now);
+                osc.stop(now + 0.7);
+            }
+        }
+
+        // GAME FLOW
+        function startGame() {
+            initAudio();
+            playSound('drop');
+            score = 0;
+            completedWordsCount = 0;
+            updateScoreDisplay();
+
+            shuffledWords = [...WORD_DATABASE].sort(() => Math.random() - 0.5);
+            currentWordIndex = 0;
+
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('end-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('game-screen').classList.add('flex');
+
+            loadWord();
+        }
+
+        function restartGame() {
+            playSound('drop');
+            startGame();
+        }
+
+        function endGame() {
+            playSound('win');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('flex');
+            document.getElementById('end-screen').classList.remove('hidden');
+            document.getElementById('end-screen').classList.add('flex');
+
+            document.getElementById('final-words-count').innerText = completedWordsCount;
+            document.getElementById('final-score').innerText = score;
+
+            const starElement = document.getElementById('star-rating');
+            if (score >= 80) {
+                starElement.innerText = '⭐⭐⭐';
+            } else if (score >= 40) {
+                starElement.innerText = '⭐⭐';
+            } else {
+                starElement.innerText = '⭐';
+            }
+
+            confetti({
+                particleCount: 120,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        }
+
+        function loadWord() {
+            if (currentWordIndex >= shuffledWords.length) {
+                shuffledWords = [...WORD_DATABASE].sort(() => Math.random() - 0.5);
+                currentWordIndex = 0;
+            }
+
+            const currentData = shuffledWords[currentWordIndex];
+            const word = currentData.word;
+            userAnswers = new Array(word.length).fill(null);
+
+            const feedbackEl = document.getElementById('feedback-message');
+            feedbackEl.innerText = '';
+            feedbackEl.className = 'h-10 flex items-center justify-center font-black text-3xl transition-all duration-200';
+
+            const container = document.getElementById('word-container');
+            container.innerHTML = '';
+
+            const lettersRow = document.createElement('div');
+            lettersRow.className = 'flex justify-center space-x-3 md:space-x-5';
+
+            const slotsRow = document.createElement('div');
+            slotsRow.className = 'flex justify-center space-x-3 md:space-x-5';
+
+            for (let i = 0; i < word.length; i++) {
+                const letterBox = document.createElement('div');
+                letterBox.className = 'w-20 text-center letter-box';
+                letterBox.innerText = word[i];
+                lettersRow.appendChild(letterBox);
+
+                const slot = document.createElement('div');
+                slot.className = 'drop-slot';
+                slot.dataset.index = i;
+                slotsRow.appendChild(slot);
+            }
+
+            container.appendChild(lettersRow);
+            container.appendChild(slotsRow);
+        }
+
+        let activeDrag = null;
+
+        function initDragSystem() {
+            const sources = [
+                document.getElementById('source-red'),
+                document.getElementById('source-blue')
+            ];
+
+            sources.forEach(src => {
+                src.addEventListener('mousedown', startDrag);
+                src.addEventListener('touchstart', startDrag, { passive: false });
+            });
+
+            window.addEventListener('mousemove', moveDrag);
+            window.addEventListener('touchmove', moveDrag, { passive: false });
+
+            window.addEventListener('mouseup', endDrag);
+            window.addEventListener('touchend', endDrag);
+        }
+
+        function startDrag(e) {
+            e.preventDefault();
+            initAudio();
+
+            const target = e.currentTarget;
+            const color = target.dataset.color;
+            playSound('drag');
+
+            const point = e.touches ? e.touches[0] : e;
+
+            const ghost = document.createElement('div');
+            ghost.className = `ball-3d ball-${color} drag-ghost`;
+            ghost.innerHTML = color === 'red' ? '🔴' : '🔵';
+            ghost.style.left = `${point.clientX}px`;
+            ghost.style.top = `${point.clientY}px`;
+            document.body.appendChild(ghost);
+
+            activeDrag = {
+                color: color,
+                ghost: ghost
+            };
+        }
+
+        function moveDrag(e) {
+            if (!activeDrag) return;
+            e.preventDefault();
+
+            const point = e.touches ? e.touches[0] : e;
+            activeDrag.ghost.style.left = `${point.clientX}px`;
+            activeDrag.ghost.style.top = `${point.clientY}px`;
+
+            const slots = document.querySelectorAll('.drop-slot');
+            slots.forEach(slot => {
+                const rect = slot.getBoundingClientRect();
+                if (
+                    point.clientX >= rect.left &&
+                    point.clientX <= rect.right &&
+                    point.clientY >= rect.top &&
+                    point.clientY <= rect.bottom
+                ) {
+                    slot.classList.add('drag-over');
+                } else {
+                    slot.classList.remove('drag-over');
+                }
+            });
+        }
+
+        function endDrag(e) {
+            if (!activeDrag) return;
+
+            const point = e.changedTouches ? e.changedTouches[0] : e;
+
+            if (activeDrag.ghost && activeDrag.ghost.parentNode) {
+                activeDrag.ghost.parentNode.removeChild(activeDrag.ghost);
+            }
+
+            const slots = document.querySelectorAll('.drop-slot');
+            let droppedSlotIndex = null;
+
+            slots.forEach(slot => {
+                slot.classList.remove('drag-over');
+                const rect = slot.getBoundingClientRect();
+                if (
+                    point.clientX >= rect.left &&
+                    point.clientX <= rect.right &&
+                    point.clientY >= rect.top &&
+                    point.clientY <= rect.bottom
+                ) {
+                    droppedSlotIndex = parseInt(slot.dataset.index);
+                }
+            });
+
+            if (droppedSlotIndex !== null) {
+                applyColorToSlot(droppedSlotIndex, activeDrag.color);
+            }
+
+            activeDrag = null;
+        }
+
+        function applyColorToSlot(index, color) {
+            userAnswers[index] = color;
+            renderSlotState(index, color);
+            playSound('drop');
+        }
+
+        function renderSlotState(index, color) {
+            const slots = document.querySelectorAll('.drop-slot');
+            const slot = slots[index];
+
+            if (!color) {
+                slot.innerHTML = '';
+                slot.style.borderStyle = 'dashed';
+            } else {
+                slot.style.borderStyle = 'solid';
+                if (color === 'red') {
+                    slot.innerHTML = `<div class="ball-3d ball-red w-full h-full text-2xl font-black text-white">🔴</div>`;
+                } else if (color === 'blue') {
+                    slot.innerHTML = `<div class="ball-3d ball-blue w-full h-full text-2xl font-black text-white">🔵</div>`;
+                }
+            }
+        }
+
+        function resetCurrentWord() {
+            playSound('drag');
+            const currentData = shuffledWords[currentWordIndex];
+            userAnswers = new Array(currentData.word.length).fill(null);
+            const slots = document.querySelectorAll('.drop-slot');
+            slots.forEach((slot, idx) => renderSlotState(idx, null));
+
+            const feedbackEl = document.getElementById('feedback-message');
+            feedbackEl.innerText = '';
+        }
+
+        function checkAnswer() {
+            const currentData = shuffledWords[currentWordIndex];
+            const correctSolution = currentData.solution;
+            const feedbackEl = document.getElementById('feedback-message');
+            const gameCard = document.getElementById('game-card');
+
+            if (userAnswers.includes(null)) {
+                feedbackEl.innerText = 'Дөңгелекті бос ұяшыққа сүйреңіз! ⚠️';
+                feedbackEl.className = 'h-10 flex items-center justify-center font-black text-xl text-amber-600';
+                return;
+            }
+
+            let isCorrect = true;
+            for (let i = 0; i < correctSolution.length; i++) {
+                if (userAnswers[i] !== correctSolution[i]) {
+                    isCorrect = false;
+                    break;
+                }
+            }
+
+            if (isCorrect) {
+                playSound('correct');
+                feedbackEl.innerText = 'Дұрыс! 👏';
+                feedbackEl.className = 'h-10 flex items-center justify-center font-black text-3xl text-emerald-600 animate-bounce';
+
+                score += 10;
+                completedWordsCount++;
+                updateScoreDisplay();
+
+                confetti({
+                    particleCount: 50,
+                    spread: 60,
+                    origin: { y: 0.7 }
+                });
+
+                setTimeout(() => {
+                    currentWordIndex++;
+                    loadWord();
+                }, 1250);
+
+            } else {
+                playSound('wrong');
+                feedbackEl.innerText = 'Қате! ❌';
+                feedbackEl.className = 'h-10 flex items-center justify-center font-black text-3xl text-red-600';
+
+                gameCard.classList.add('shake');
+                setTimeout(() => gameCard.classList.remove('shake'), 500);
+            }
+        }
+
+        function updateScoreDisplay() {
+            document.getElementById('score-display').innerText = score;
+        }
+
+        window.onload = function() {
+            initDragSystem();
+        };
+    </script>
+</body>
+</html>
